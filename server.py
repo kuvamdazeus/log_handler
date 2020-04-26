@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 import datetime
-
+# self.log("error", "on heavy load", "IP: {} can't be connected !".format(user))
 count = 1
 
 def cleanup_backlogs():
@@ -11,14 +11,44 @@ def cleanup_backlogs():
 class Server:
     """A simulated server which provides data to clients through requests and thus multiple clients of same
     IP addresses and thus can also flood the servers"""
-    users = []
+    def remove_connection(self, connections):
+        if type(connections) is list:
+            for connection in connections:
+                if connection in self.users:
+                    self.users.remove(connection)
+                    self.log("info", "removed connection", "IP: {}, Load: {}".format(connection, self.get_load()))
+        else:
+            if connections in self.users:
+                self.users.remove(connections)
+                self.log("info", "removed connection", "IP: {}, Load: {}".format(connections, self.get_load()))
+
+
+    def add_connection(self, users):
+        """It takes users parameter as a dictionary of users and the number of connections to an IP
+        as its value"""
+        if self.get_load() > 500:
+            self.log("error", "heavy load")
+            return "Error"
+        if type(users) is list:
+            for user in users:
+                if not user in self.users:
+                    self.users.append(user)
+                    self.log("info", "added connection", "IP: {}, Load: {}".format(users, self.get_load()))
+        else:
+            if not users in self.users:
+                self.users.append(users)
+                self.log("info", "added connection", "IP: {}, Load: {}".format(users, self.get_load()))
+
     def __init__(self, user_list = []):
+        self.users = []
         """It takes an optional parameter which can be used to initialize a server
         by providing initial connections"""
         global count
         self.id = count
         count += 1
-        self.users += user_list
+        if len(user_list) > 0:
+            for user in user_list:
+                self.add_connection(user)
         with open("server_log.log", "a") as log_file:
             log_file.write("{} - INFO: NEW INSTANCE Server[{}] msg =  (a new server instance was created)\n".format(datetime.datetime.now(), self.id))
             log_file.close()
@@ -28,47 +58,20 @@ class Server:
             log_file.write("{} - {}: {} AT Server[{}] msg =  ({})\n".format(datetime.datetime.now(), log_type.upper(), details.upper(), self.id, msg))
             log_file.close()
 
-    def remove_connection(self, connections):
-        if type(connections) is list:
-            for connection in connections:
-                if connection in self.users:
-                    self.users.remove(connection)
-                    self.log("info", "removed connection", "IP: {}, Load: {}".format(connection, self.get_load()))
-        else:
-            self.users.remove(connections)
-            self.log("info", "removed connection", "IP: {}, Load: {}".format(connections, self.get_load()))
-
-    def add_connection(self, users):
-        """It takes users parameter as a dictionary of users and the number of connections to an IP
-        as its value"""
-        for user in users:
-            if user in self.users:
-                self.remove_connection(user)
-
-            elif self.get_load() < 500 and not user in self.users:
-                self.users.append(user)
-                self.log("info", "added connection", "IP: {}, Load: {}".format(user, self.get_load()))
-
-            else:
-                self.log("error", "on heavy load", "IP: {} can't be connected !".format(user))
-
     def get_load(self):
         return len(self.users)
 
     def __str__(self):
-        return "Server with id: {}".format(self.id)
+        return "Server[{}]".format(self.id)
 
-    def transfer(self, user_number):
-        """Defines a new server and transfers users in the self server to the new server"""
+    def transfer(self, other, user_number):
+        """Defines a new server and transfers users in the self server to the specified server"""
         try:
-            assert user_number <= len(self.get_load())
+            assert user_number <= self.get_load()
         except AssertionError:
             return None
-        user_list = []
-        for i in range(user_number):
-            user_list.append(self.users[i])
-            self.users.pop(i)
-        return Server(user_list)
+        other.add_connection(self.users[:user_number])
+        self.remove_connection(self.users[:user_number])
 
 if __name__ == "__main__":
     """adding new connections to create logs that need to be extracted"""
@@ -85,4 +88,7 @@ if __name__ == "__main__":
     server.add_connection(["190.189.23.34", "190.189.23.34"])
     server.remove_connection(["127.0.0.1", "127.0.0.1", "198.145.233.34", "172.20.10.5"])
     server.add_connection(["124.645.34.9", "189.554.78.8", "132.87.89.90", "172.20.10.5"])
+    server1 = Server()
+    server.transfer(server1, 3)
     print(server.get_load(), server.users)
+    print(server1.users, server1.get_load())
