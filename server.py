@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 import datetime
 
 count = 1
@@ -27,27 +28,47 @@ class Server:
             log_file.write("{} - {}: {} AT Server[{}] msg =  ({})\n".format(datetime.datetime.now(), log_type.upper(), details.upper(), self.id, msg))
             log_file.close()
 
+    def remove_connection(self, connections):
+        if type(connections) is list:
+            for connection in connections:
+                if connection in self.users:
+                    self.users.remove(connection)
+                    self.log("info", "removed connection", "IP: {}, Load: {}".format(connection, self.get_load()))
+        else:
+            self.users.remove(connections)
+            self.log("info", "removed connection", "IP: {}, Load: {}".format(connections, self.get_load()))
+
     def add_connection(self, users):
         """It takes users parameter as a dictionary of users and the number of connections to an IP
         as its value"""
         for user in users:
-            if self.get_load() < 500:
+            if user in self.users:
+                self.remove_connection(user)
+
+            elif self.get_load() < 500 and not user in self.users:
                 self.users.append(user)
                 self.log("info", "added connection", "IP: {}, Load: {}".format(user, self.get_load()))
+
             else:
                 self.log("error", "on heavy load", "IP: {} can't be connected !".format(user))
-
-    def remove_connection(self, connections):
-        for connection in connections:
-            if connection in self.users:
-                self.users.remove(connection)
-                self.log("info", "removed connection", "IP: {}, Load: {}".format(connection, self.get_load()))
 
     def get_load(self):
         return len(self.users)
 
     def __str__(self):
         return "Server with id: {}".format(self.id)
+
+    def transfer(self, user_number):
+        """Defines a new server and transfers users in the self server to the new server"""
+        try:
+            assert user_number <= len(self.get_load())
+        except AssertionError:
+            return None
+        user_list = []
+        for i in range(user_number):
+            user_list.append(self.users[i])
+            self.users.pop(i)
+        return Server(user_list)
 
 if __name__ == "__main__":
     """adding new connections to create logs that need to be extracted"""
