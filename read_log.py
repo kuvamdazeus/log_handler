@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 import re, operator, csv
 """This script reads the server_log.py and extracts the ip addresses which added or established a connection
 with the server, process_log_file() function takes the log_file as its first argumnet and the details of the
