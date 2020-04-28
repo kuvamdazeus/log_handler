@@ -33,15 +33,69 @@ def process_log_file(log_file, details):
         returned_dict = {}
         for ip in dict:
             returned_dict["IP"] = ip
-            returned_dict["Number"] = dict[ip]
+            returned_dict["Activities"] = dict[ip]
         returned_list.append(returned_dict)
 
     file = open("report.txt", "w")
-    writer = csv.DictWriter(file, ["IP", "Number"])
+    writer = csv.DictWriter(file, ["IP", "Activities"])
     writer.writeheader()
     writer.writerows(returned_list)
     file.close()
+    return returned_list
 
+def investigate_error_and_info(file_path):
+    """returns a list of tuples and tuple = (date, detail, message)"""
+    detail_pattern = r":\s?([A-Z\s]+)\s?AT"
+    message_pattern = r"\((.*)\)"
+    date_pattern = r"^([0-9\-\s\:]+)\."
+    file = open(file_path)
+    error_lines = []
+    info_lines = []
+    for line in file:
+        tuple = (re.search(date_pattern, line).group(1), re.search(detail_pattern, line).group(1).strip(), re.search(message_pattern, line).group(1))
+        if "ERROR" in line:
+            error_lines.append(tuple)
+        elif "INFO" in line:
+            info_lines.append(tuple)
+    file.close()
+    return error_lines, info_lines
 
+def write_error_and_info(investigated_error_and_info):
+    error_lines, info_lines = investigated_error_and_info
+    file = open("report.txt", "a")
+    file.write("-"*50 + "\n")
+    file.write("ERRORS: \n")
+    error_list = []
+    info_list = []
+    if len(error_lines) > 0:
+        for error_tuple in error_lines:
+            error_dict = {}
+            date, detail, message = error_tuple
+            error_dict["Date"] = date
+            error_dict["Details"] = detail
+            error_dict["Message"] = message
+            error_list.append(error_dict)
+        writer = csv.DictWriter(file, ["Date", "Details", "Message"])
+        writer.writeheader()
+        writer.writerows(error_list)
+    else:
+        file.write("None\n")
+    file.write("-"*50 + "\n")
+    file.write("INFO: \n")
+    if len(info_lines) > 0:
+        for info_tuple in info_lines:
+            info_dict = {}
+            date, detail, message = info_tuple
+            info_dict["Date"] = date
+            info_dict["Details"] = detail
+            info_dict["Message"] = message
+            info_list.append(info_dict)
+        writer = csv.DictWriter(file, ["Date", "Details", "Message"])
+        writer.writeheader()
+        writer.writerows(info_list)
+    else:
+        file.write("None\n")
+    file.close()
 
 process_log_file("server_log.log", "added connection")
+write_error_and_info(investigate_error_and_info("server_log.log"))

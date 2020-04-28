@@ -33,7 +33,7 @@ class Server:
             for user in users:
                 if not user in self.users:
                     self.users.append(user)
-                    self.log("info", "added connection", "IP: {}, Load: {}".format(users, self.get_load()))
+                    self.log("info", "added connection", "IP: {}, Load: {}".format(user, self.get_load()))
         else:
             if not users in self.users:
                 self.users.append(users)
@@ -50,7 +50,7 @@ class Server:
             for user in user_list:
                 self.add_connection(user)
         with open("server_log.log", "a") as log_file:
-            log_file.write("{} - INFO: NEW INSTANCE Server[{}] msg =  (a new server instance was created)\n".format(datetime.datetime.now(), self.id))
+            log_file.write("{} - INFO: NEW INSTANCE AT Server[{}] msg =  (a new server instance was created)\n".format(datetime.datetime.now(), self.id))
             log_file.close()
 
     def log(self, log_type, details, msg = "None"):
