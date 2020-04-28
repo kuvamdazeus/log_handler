@@ -1,5 +1,5 @@
 import re, operator, csv
-"""This script reads the server_log.py and extracts th e ip addresses which added or established a connection 
+"""This script reads the server_log.py and extracts the ip addresses which added or established a connection
 with the server, process_log_file() function takes the log_file as its first argumnet and the details of the
 info or error message and then searches the log_file to extract the ip addresses associated with number of requests"""
 def process_log_file(log_file, details):
@@ -34,7 +34,7 @@ def process_log_file(log_file, details):
             returned_dict["IP"] = ip
             returned_dict["Number"] = dict[ip]
         returned_list.append(returned_dict)
-        
+
     file = open("report.txt", "w")
     writer = csv.DictWriter(file, ["IP", "Number"])
     writer.writeheader()
